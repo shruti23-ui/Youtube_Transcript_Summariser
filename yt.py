@@ -2,7 +2,7 @@ import streamlit as st
 from dotenv import load_dotenv
 import os
 import google.generativeai as genai
-from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscript
+from youtube_transcript_api import YouTubeTranscriptApi
 
 # Load environment variables
 load_dotenv()
@@ -44,12 +44,6 @@ def extract_transcript_details(youtube_video_url):
         transcript_data = YouTubeTranscriptApi.get_transcript(video_id)
         transcript = " ".join([item["text"] for item in transcript_data])
         return transcript, video_id  # Return video_id along with the transcript
-    except TranscriptsDisabled:
-        st.error("This video has subtitles disabled, and a transcript cannot be retrieved.")
-        return None, None
-    except NoTranscript:
-        st.error("No transcript is available for this video.")
-        return None, None
     except Exception as e:
         st.error(f"Error fetching transcript: {str(e)}. Please check the video URL or try another video.")
         return None, None  # Return None for video_id if there is an error
