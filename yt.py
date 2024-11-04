@@ -38,7 +38,7 @@ def extract_transcript_details(youtube_video_url):
             video_id = youtube_video_url.split("watch?v=")[1].split("&")[0]
         else:
             st.error("Invalid YouTube link format. Please enter a valid link.")
-            return None
+            return None, None
 
         transcript_data = YouTubeTranscriptApi.get_transcript(video_id)
         transcript = " ".join([item["text"] for item in transcript_data])
@@ -78,9 +78,11 @@ if st.button("Get Detailed Notes"):
     with st.spinner("Extracting transcript and generating summary..."):
         transcript_text, video_id = extract_transcript_details(youtube_link)
 
-        if transcript_text:
-            # Display video thumbnail using the extracted video_id
+        # Display video thumbnail only if video_id is successfully retrieved
+        if video_id:
             st.image(f"http://img.youtube.com/vi/{video_id}/0.jpg", use_column_width=True)
+
+        if transcript_text:
             summary = generate_gemini_content(transcript_text, prompt)
             if summary:
                 st.markdown("## Detailed Notes:")
