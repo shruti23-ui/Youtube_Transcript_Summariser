@@ -29,24 +29,13 @@ Here is the text to summarize:
 # Function to get the transcript data from YouTube videos
 def extract_transcript_details(youtube_video_url):
     try:
-        # Extract video ID from different YouTube URL formats
-        if "youtu.be" in youtube_video_url:
-            video_id = youtube_video_url.split("/")[-1]
-        elif "v=" in youtube_video_url:
-            video_id = youtube_video_url.split("v=")[1].split("&")[0]
-        elif "watch" in youtube_video_url:
-            video_id = youtube_video_url.split("watch?v=")[1].split("&")[0]
-        else:
-            st.error("Invalid YouTube link format. Please enter a valid link.")
-            return None, None
-
-        # Attempt to retrieve the transcript
+        video_id = youtube_video_url.split("v=")[1].split("&")[0]
         transcript_data = YouTubeTranscriptApi.get_transcript(video_id)
         transcript = " ".join([item["text"] for item in transcript_data])
-        return transcript, video_id  # Return video_id along with the transcript
+        return transcript
     except Exception as e:
-        st.error(f"Error fetching transcript: {str(e)}. Please check the video URL or try another video.")
-        return None, None  # Return None for video_id if there is an error
+        st.error("Error fetching transcript. Please check the video URL or try another video.")
+        return None
 
 # Function to generate a summary using Google Gemini Pro
 def generate_gemini_content(transcript_text, prompt):
@@ -74,14 +63,18 @@ if summary_format == "Bullet Points":
 elif summary_format == "Paragraph":
     prompt = base_prompt + f" Please provide a coherent single paragraph summary, strictly avoiding bullet points, maintaining a formal tone, and staying within {summary_length} words."
 
+# Display video thumbnail
+if youtube_link:
+    try:
+        video_id = youtube_link.split("v=")[1].split("&")[0]
+        st.image(f"http://img.youtube.com/vi/{video_id}/0.jpg", use_column_width=True)
+    except IndexError:
+        st.error("Invalid YouTube link format. Please ensure it includes 'v=' parameter.")
+
 # Button to fetch and display the summary
 if st.button("Get Detailed Notes"):
     with st.spinner("Extracting transcript and generating summary..."):
-        transcript_text, video_id = extract_transcript_details(youtube_link)
-
-        # Display video thumbnail only if video_id is successfully retrieved
-        if video_id:
-            st.image(f"http://img.youtube.com/vi/{video_id}/0.jpg", use_column_width=True)
+        transcript_text = extract_transcript_details(youtube_link)
 
         if transcript_text:
             summary = generate_gemini_content(transcript_text, prompt)
