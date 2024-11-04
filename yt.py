@@ -13,14 +13,16 @@ if not API_KEY:
 else:
     genai.configure(api_key=API_KEY)
 
-# Improved Prompt for Google Gemini Pro
-prompt = """
-You are a highly efficient summarizer for YouTube videos, tasked with creating concise, insightful summaries.
-For each video, provide a summary within 250 words that captures:
-- Key points and main topics discussed.
-- Important conclusions or recommendations made.
-- Any notable facts or insights.
-Format the summary in bullet points, and maintain a neutral, informative tone.
+# Default prompt for Google Gemini Pro
+base_prompt = """
+You are an expert summarizer specifically trained for YouTube videos. Your task is to create comprehensive and clear summaries based on the transcript provided. For each video, ensure to include:
+
+1. **Key Points**: Identify and outline the most important ideas discussed.
+2. **Conclusions**: Highlight any significant conclusions or recommendations made by the speaker(s).
+3. **Insights**: Note any notable facts, figures, or insights that are shared throughout the video.
+
+The output should be tailored to the requested format. When creating bullet points, ensure that each point is succinct and clear. When creating a paragraph, maintain a coherent flow, linking ideas together logically.
+
 Here is the text to summarize:
 """
 
@@ -40,7 +42,7 @@ def generate_gemini_content(transcript_text, prompt):
     try:
         model = genai.GenerativeModel("gemini-pro")
         response = model.generate_content(prompt + transcript_text)
-        return response.text
+        return response.text.strip()  # Strip whitespace from the response
     except Exception as e:
         st.error("Error generating summary. Please try again.")
         return None
@@ -48,6 +50,18 @@ def generate_gemini_content(transcript_text, prompt):
 # Streamlit App UI
 st.title("YouTube Transcript to Detailed Notes Converter")
 youtube_link = st.text_input("Enter YouTube Video Link:")
+
+# User options for summary customization
+st.sidebar.header("Summary Settings")
+summary_length = st.sidebar.slider("Max Words for Summary", min_value=50, max_value=5000, value=250, step=50)
+summary_format = st.sidebar.radio("Summary Format", options=["Bullet Points", "Paragraph"])
+
+# Adjust the prompt based on user settings
+if summary_format == "Bullet Points":
+    prompt = base_prompt + f" Please summarize the following transcript in bullet points, keeping it concise and within {summary_length} words."
+    
+elif summary_format == "Paragraph":
+    prompt = base_prompt + f" Please provide a coherent single paragraph summary, strictly avoiding bullet points, maintaining a formal tone, and staying within {summary_length} words."
 
 # Display video thumbnail
 if youtube_link:
